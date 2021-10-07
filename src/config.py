@@ -1,0 +1,1 @@
+VIDEO_PATH='/home/sri/Documents/PETS2009.avi'
