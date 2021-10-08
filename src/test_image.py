@@ -1,3 +1,5 @@
+import sys
+
 import onnxruntime as rt
 import time
 from config import *
@@ -40,6 +42,7 @@ else:
     # print(len(bboxes))
     image = draw_bbox(original_image, bboxes)
     image=cv2.resize(image,(500,500))
+    print(sys.version)
     cv2.imshow('img', image)
     cv2.waitKey(0)
 
