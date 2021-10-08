@@ -10,14 +10,9 @@ if 'CUDAExecutionProvider' in rt.get_available_providers():
 else:
     sess = rt.InferenceSession(ONNX_PATH, providers=['CPUExecutionProvider'])
 
-capture = cv2.VideoCapture(VIDEO_PATH)
-
-while True:
-    start_time = time.time()
-    ret, frame = capture.read()
     # Test if it has reached the end of the video
     input_size = 416
-    original_image = frame
+    original_image = cv2.imread(IMG_PATH)
     original_image_size = original_image.shape[:2]
 
     image_data = image_preprocess(np.copy(original_image), [input_size, input_size])
@@ -44,11 +39,10 @@ while True:
     bboxes = nms(bboxes, 0.213, method='nms')
     # print(len(bboxes))
     image = draw_bbox(original_image, bboxes)
-    if cv2.waitKey(30) & 0xff == ord('q'):
-        break
+    image=cv2.resize(image,(500,500))
     cv2.imshow('img', image)
-    print("FPS: ", 1.0 / (time.time() - start_time))
+    cv2.waitKey(0)
+
 
 print("[INFO] cleaning up...")
-capture.release()
-cv2.destroyAllWindows()
+

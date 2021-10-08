@@ -4,7 +4,7 @@ import onnxruntime as rt
 from scipy import special
 import colorsys
 import random
-
+from src.config import *
 # model = onnx.load("/home/sri/Documents/yolov4.onnx")
 # print(onnx.checker.check_model(model) ) # Check that the IR is well formed
 # print(onnx.helper.printable_graph(model.graph))  # Print a human readable representation of the graph
@@ -164,7 +164,7 @@ def read_class_names(class_file_name):
             names[ID] = name.strip('\n')
     return names
 
-def draw_bbox(image, bboxes, classes=read_class_names("/home/sri/education/social_distancing/test/coco.names"), show_label=False):
+def draw_bbox(image, bboxes, classes=read_class_names(COCO_PATH), show_label=False):
     """
     bboxes: [x_min, y_min, x_max, y_max, probability, cls_id] format coordinates.
     """
@@ -202,8 +202,8 @@ def draw_bbox(image, bboxes, classes=read_class_names("/home/sri/education/socia
 
 
 
-input_size = 416
 
+input_size = 416
 original_image = cv2.imread("/home/sri/Documents/PAN_CARD.jpeg")
 #original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 original_image_size = original_image.shape[:2]
@@ -214,7 +214,7 @@ image_data = image_preprocess(np.copy(original_image), [input_size, input_size])
 image_data = image_data[np.newaxis, ...].astype(np.float32)
 print(image_data[0].shape)
 print("Preprocessed image shape:",image_data.shape) # shape of the preprocessed input
-sess = rt.InferenceSession("/home/sri/Documents/yolov4.onnx")
+sess = rt.InferenceSession(ONNX_PATH)
 
 outputs = sess.get_outputs()
 print('output name:',outputs)
@@ -225,7 +225,7 @@ print('Input name:',input_name)
 detections = sess.run(output_names, {input_name: image_data})
 print("Output shape:", list(map(lambda detection: detection.shape, detections)))
 
-ANCHORS = "/home/sri/education/social_distancing/test/anchors.txt"
+ANCHORS =ANCHOR_PATH
 STRIDES = [8, 16, 32]
 XYSCALE = [1.2, 1.1, 1.05]
 
@@ -238,5 +238,3 @@ bboxes = nms(bboxes, 0.213, method='nms')
 image = draw_bbox(original_image, bboxes)
 print(image.shape)
 cv2.imwrite('/home/sri/education/social_distancing/test/detected.jpg',image)
-# sess = rt.InferenceSession("/home/sri/Documents/yolov4.onnx")
-# outputs = sess.get_outputs()

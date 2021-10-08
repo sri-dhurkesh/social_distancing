@@ -3,12 +3,14 @@ import numpy as np
 import random
 import colorsys
 from scipy import special
+from config import *
 
 COLOR_RED = (0, 0, 255)
 COLOR_GREEN = (0, 255, 0)
 COLOR_BLUE = (255, 0, 0)
 BIG_CIRCLE = 60
 SMALL_CIRCLE = 3
+
 
 def get_anchors(anchors_path, tiny=False):
     """loads the anchors.txt from a file"""
@@ -150,7 +152,7 @@ def read_class_names(class_file_name):
     return names
 
 
-def draw_bbox(image, bboxes, classes=read_class_names("/home/sri/education/social_distancing/test/coco.names")):
+def draw_bbox(image, bboxes, classes=read_class_names(COCO_PATH)):
     """
     bboxes: [x_min, y_min, x_max, y_max, probability, cls_id] format coordinates.
     """
