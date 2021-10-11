@@ -1,11 +1,12 @@
 import imutils
 import onnxruntime as rt
-
+import time
 # own modules
 import src.plot as plot
 import src.utills as utills
 from src.postprocessing import *
 from src.preprocessing import *
+
 
 mouse_pts = []
 
@@ -27,7 +28,6 @@ def get_human_box_detection(bbox):
 
 np.random.seed(42)
 count = 0
-count = 0
 print('Device:', rt.get_device())
 print('All Available Device:', rt.get_available_providers())
 if 'CUDAExecutionProvider' in rt.get_available_providers():
@@ -39,14 +39,20 @@ capture = cv2.VideoCapture(VIDEO_PATH)
 height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 fps = int(capture.get(cv2.CAP_PROP_FPS))
-
+times=int(capture.get(cv2.CAP_PROP_POS_MSEC))
 # Set scale for birds eye view
 # Bird's eye view will only show ROI
 scale_w, scale_h = utills.get_scale(width, height)
 points = []
 global image
 while True:
+    start_time = time.time()
+    print(start_time)
     ret, frame = capture.read()
+    fps = int(capture.get(cv2.CAP_PROP_FPS))
+    times = int(capture.get(cv2.CAP_PROP_POS_MSEC))
+    print('fps in cv:',fps)
+    print('time in cv:',times)
     input_size = 416
     original_image = imutils.resize(frame, width=500)
     frame = original_image
@@ -138,11 +144,13 @@ while True:
     img,high,low,safe= plot.social_distancing_view(frame1, bxs_mat, boxes1, risk_count)
     print('Bird Image:', bird_image.shape)
     print('Frame Image:', img.shape)
+    print("FPS: ", 1.0 / (time.time() - start_time))
     if cv2.waitKey(30) & 0xff == ord('q'):
         break
     cv2.imshow('human', img)
     cv2.imshow('bird', bird_image)
 
+    print('-----------------------------------------------------------')
 capture.release()
 cv2.destroyAllWindows()
 
