@@ -3,7 +3,7 @@ import numpy as np
 import random
 import colorsys
 from scipy import special
-from config import *
+from src.config import *
 
 COLOR_RED = (0, 0, 255)
 COLOR_GREEN = (0, 255, 0)
@@ -39,7 +39,7 @@ def postprocess_bbbox(pred_bbox, ANCHORS, STRIDES, XYSCALE=[1, 1, 1]):
 
     pred_bbox = [np.reshape(x, (-1, np.shape(x)[-1])) for x in pred_bbox]
     pred_bbox = np.concatenate(pred_bbox, axis=0)
-    print(pred_bbox.shape)
+    # print(pred_bbox.shape)
     return pred_bbox
 
 

@@ -39,9 +39,14 @@ else:
     pred_bbox = postprocess_bbbox(detections, ANCHORS, STRIDES, XYSCALE)
     bboxes = postprocess_boxes(pred_bbox, original_image_size, input_size, 0.25)
     bboxes = nms(bboxes, 0.213, method='nms')
-    # print(len(bboxes))
+    print('No.of.BBOX:',len(bboxes))
+    #  bboxes: [x_min, y_min, x_max, y_max, probability, cls_id] format coordinates.
+    print(bboxes)
+    b=np.array(bboxes)
+
+
     image = draw_bbox(original_image, bboxes)
-    image=cv2.resize(image,(500,500))
+    #image=cv2.resize(image,(500,500))
     print(sys.version)
     cv2.imshow('img', image)
     cv2.waitKey(0)

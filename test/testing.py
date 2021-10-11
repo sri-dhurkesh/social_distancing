@@ -1,105 +1,59 @@
-import cv2
-import onnx
 import onnxruntime as rt
-import onnxruntime as rt
-from timeit import default_timer as timer
-from PIL import Image, ImageFont, ImageDraw
 import time
-from src.config import *
-from src.postprocessing import *
-from src.preprocessing import *
+from config import *
+from postprocessing import *
+from preprocessing import *
+import imutils
 
-import numpy as np
-from PIL import Image
+print('Device:', rt.get_device())
+print('All Available Device:', rt.get_available_providers())
+if 'CUDAExecutionProvider' in rt.get_available_providers():
+    sess = rt.InferenceSession(ONNX_PATH, providers=['CUDAExecutionProvider'])
+else:
+    sess = rt.InferenceSession(ONNX_PATH, providers=['CPUExecutionProvider'])
 
-# this function is from yolo3.utils.letterbox_image
-def letterbox_image(image, size):
-    '''resize image with unchanged aspect ratio using padding'''
-    iw, ih = image.size
-    w, h = size
-    scale = min(w/iw, h/ih)
-    nw = int(iw*scale)
-    nh = int(ih*scale)
+capture = cv2.VideoCapture(VIDEO_PATH)
 
-    image = image.resize((nw,nh), Image.BICUBIC)
-    new_image = Image.new('RGB', size, (128,128,128))
-    new_image.paste(image, ((w-nw)//2, (h-nh)//2))
-    return new_image
+while True:
+    start_time = time.time()
+    ret, frame = capture.read()
+    # Test if it has reached the end of the video
+    input_size = 416
+    original_image = imutils.resize(frame,width=1000)
+    original_image_size = original_image.shape[:2]
+    print('Original Image Shape:', original_image.shape)
+    image_data = image_preprocess(np.copy(original_image), [input_size, input_size])
+    image_data = image_data[np.newaxis, ...].astype(np.float32)
 
-def preprocess(img):
-    model_image_size = (416, 416)
-    boxed_image = letterbox_image(img, tuple(reversed(model_image_size)))
-    image_data = np.array(boxed_image, dtype='float32')
-    image_data /= 255.
-    image_data = np.transpose(image_data, [2, 0, 1])
-    image_data = np.expand_dims(image_data, 0)
-    return image_data
+    print("Preprocessed image shape:", image_data.shape)  # shape of the preprocessed input
 
-image = Image.open("/home/sri/Documents/RTR2LP34edit.jpg")
-# input
-image_data = preprocess(image)
-image_size = np.array([image.size[1], image.size[0]], dtype=np.float32).reshape(1, 2)
-print(image_size.shape)
-print(image_data[0].shape)
-print("Preprocessed image shape:",image_data.shape) # shape of the preprocessed input
-sess = rt.InferenceSession("/home/sri/Documents/tiny-yolov3-11.onnx")
-final=np.array([1,2],dtype='float32')
-print('final:',image_size)
-outputs = sess.get_outputs()
-print('output name:',outputs)
-output_names = list(map(lambda output: output.name, outputs))
-input_name = sess.get_inputs()
-print('Input name:',input_name)
-start = timer()
-out_boxes, out_scores, out_classes = sess.run(output_names,{input_name[0].name:image_data,input_name[1].name:image_size})
-print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
-print(type(out_classes))
-print(out_classes.shape)
-print(out_classes[0])
-print(out_boxes.shape,out_scores.shape,out_classes.shape)
-for i, c in reversed(list(enumerate(out_classes))):
-    print(c)
+    outputs = sess.get_outputs()
+    output_names = list(map(lambda output: output.name, outputs))
+    input_name = sess.get_inputs()[0].name
 
-# thickness = (image.size[0] + image.size[1]) // 300
-# for i, c in reversed(list(enumerate(out_classes))):
-#     predicted_class=1
-#     box = out_boxes[0][i]
-#     print(box.shape)
-#     score = out_scores[i]
-#     #label = '{} {:.2f}'.format(predicted_class, score)
-#     draw = ImageDraw.Draw(image)
-#     #label_size = draw.textsize(label)
-#
-#     top, left, bottom, right = box
-#     top = max(0, np.floor(top + 0.5).astype('int32'))
-#     left = max(0, np.floor(left + 0.5).astype('int32'))
-#     bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
-#     right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-#     print(f'top:{top},left:{left},right:{right},bottom:{bottom}')
-#     # print(label, (left, top), (right, bottom))
-#     #
-#     # if top - label_size[1] >= 0:
-#     #     text_origin = np.array([left, top - label_size[1]])
-#     # else:
-#     #     text_origin = np.array([left, top + 1])
-#     #
-#     # # My kingdom for a good redistributable image drawing library.
-#     for i in range(thickness):
-#         draw.rectangle(
-#             [left + i, top + i, right - i, bottom - i],
-#             outline=(0, 255, 0))
-#     # draw.rectangle(
-#     #     [tuple(text_origin), tuple(text_origin + label_size)],
-#     #     fill=self.colors[c])
-#     # draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-#     #del draw
-#     print(type(image))
-#     draw.save('out.jpg')
-#
-#
-#
-#
-# end = timer()
-# print(end - start)
+    detections = sess.run(output_names, {input_name: image_data})
+    print("Output shape:", list(map(lambda detection: detection.shape, detections)))
 
+    ANCHORS = ANCHOR_PATH
+    STRIDES = [8, 16, 32]
+    XYSCALE = [1.2, 1.1, 1.05]
 
+    ANCHORS = get_anchors(ANCHORS)
+    STRIDES = np.array(STRIDES)
+
+    pred_bbox = postprocess_bbbox(detections, ANCHORS, STRIDES, XYSCALE)
+    bboxes = postprocess_boxes(pred_bbox, original_image_size, input_size, 0.25)
+    bboxes = nms(bboxes, 0.213, method='nms') #0.213
+    print('No.of.Detections:',len(bboxes))
+    print('----bboxes----')
+    for i in bboxes:
+        print(i)
+    image = draw_bbox(original_image, bboxes)
+    if cv2.waitKey(30) & 0xff == ord('q'):
+        break
+    cv2.imshow('img', image)
+    print("FPS: ", 1.0 / (time.time() - start_time))
+
+print("[INFO] cleaning up...")
+capture.release()
+cv2.destroyAllWindows()
