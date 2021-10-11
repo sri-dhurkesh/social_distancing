@@ -15,9 +15,10 @@ def bird_eye_view(frame, distances_mat, bottom_points, scale_w, scale_h, risk_co
     green = (0, 255, 0)
     yellow = (0, 255, 255)
     white = (200, 200, 200)
+    black = (0,0,0)
 
     blank_image = np.zeros((int(h * scale_h), int(w * scale_w), 3), np.uint8)
-    blank_image[:] = white
+    blank_image[:] = black
     warped_pts = []
     r = []
     g = []

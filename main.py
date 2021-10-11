@@ -2,8 +2,8 @@ import imutils
 import onnxruntime as rt
 
 # own modules
-import plot
-import utills
+import src.plot as plot
+import src.utills as utills
 from src.postprocessing import *
 from src.preprocessing import *
 
