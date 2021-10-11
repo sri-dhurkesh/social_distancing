@@ -8,5 +8,5 @@ https://github.com/onnx/models/blob/master/vision/object_detection_segmentation/
 **Step 4:** Download the video file
 https://raw.githubusercontent.com/basileroth75/covid-social-distancing-detection/master/video/PETS2009.avi <br>
 **Step 5:** Give the path in config file present in src folder <br>
-**Step 6:** Run main.py file src directory <br>
-**Step 7:** Run test_image.py file in src directtory to check one imagee (Optional) <br>
+**Step 6:** Run main.py file in social distancing directory <br>
+**Step 7:** Run test_image.py file in src directtory to check one image (Optional) <br>
